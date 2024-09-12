@@ -7,13 +7,12 @@ categories: []
 tags: []
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE)
-```
+
 
 # R Markdown
 
-```{r}
+
+```r
 
 library(ggplot2)
 
@@ -29,8 +28,14 @@ ggplot(df, aes(x = year, y = pv2p, color = party, group = party)) +
   scale_color_manual(values = c("democrat" = "blue", "republican" = "red")) +
   theme_minimal() +
   theme(legend.title = element_blank())
-
+## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+## ℹ Please use `linewidth` instead.
+## This warning is displayed once every 8 hours.
+## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+## generated.
 ```
+
+<img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-1-1.png" width="672" />
 
 <!-- ```{r} -->
 
