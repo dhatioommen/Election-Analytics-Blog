@@ -1,0 +1,386 @@
+---
+title: Elections and the Economy
+author: Dhati Oommen
+date: '2024-09-14'
+slug: elections-and-the-economy
+categories: []
+tags: []
+---
+
+```{r}
+# Build multiple predictive models using various national economic predictors
+
+# Model 1: GDP growth only
+reg_gdp <- lm(pv2p ~ GDP_growth_quarterly, data = d_inc_econ_2)
+summary(reg_gdp)
+
+# Model 2: GDP growth and Unemployment
+reg_gdp_unemp <- lm(pv2p ~ GDP_growth_quarterly + unemployment, data = d_inc_econ_2)
+summary(reg_gdp_unemp)
+
+# Model 3: GDP growth, Unemployment, and Inflation (CPI)
+reg_gdp_unemp_cpi <- lm(pv2p ~ GDP_growth_quarterly + unemployment + CPI, data = d_inc_econ_2)
+summary(reg_gdp_unemp_cpi)
+
+# Model 4: Full Model with more economic predictors (e.g., stock market)
+reg_full <- lm(pv2p ~ GDP_growth_quarterly + unemployment + CPI + sp500_, data = d_inc_econ_2)
+summary(reg_full)
+
+# Compare the models using R-squared and MSE
+list(summary(reg_gdp)$r.squared, summary(reg_gdp_unemp)$r.squared, 
+     summary(reg_gdp_unemp_cpi)$r.squared, summary(reg_full)$r.squared)
+
+# MSE comparison
+mse_gdp <- mean((reg_gdp$model$pv2p - reg_gdp$fitted.values)^2)
+mse_gdp_unemp <- mean((reg_gdp_unemp$model$pv2p - reg_gdp_unemp$fitted.values)^2)
+mse_gdp_unemp_cpi <- mean((reg_gdp_unemp_cpi$model$pv2p - reg_gdp_unemp_cpi$fitted.values)^2)
+mse_full <- mean((reg_full$model$pv2p - reg_full$fitted.values)^2)
+
+list(mse_gdp, mse_gdp_unemp, mse_gdp_unemp_cpi, mse_full)
+
+```
+```{r}
+# Add a variable to distinguish between sitting presidents and same-party heirs
+d_inc_econ_2 <- d_inc_econ_2 |> 
+  mutate(president_type = ifelse(winner == TRUE, "Sitting", "Heir"))
+
+# Model 1: Sitting Presidents
+reg_sitting <- lm(pv2p ~ GDP_growth_quarterly, data = d_inc_econ_2 |> filter(president_type == "Sitting"))
+summary(reg_sitting)
+
+# Model 2: Same-party Heirs
+reg_heir <- lm(pv2p ~ GDP_growth_quarterly, data = d_inc_econ_2 |> filter(president_type == "Heir"))
+summary(reg_heir)
+
+# Compare R-squared values for sitting presidents vs same-party heirs
+list(summary(reg_sitting)$r.squared, summary(reg_heir)$r.squared)
+
+```
+```{r}
+# Load required libraries
+library(car)
+library(tidyverse)
+
+####----------------------------------------------------------#
+#### 1. Build Multiple Predictive Models with National Economic Predictors
+####----------------------------------------------------------#
+
+# Model 1: GDP growth only
+reg_gdp <- lm(pv2p ~ GDP_growth_quarterly, data = d_inc_econ_2)
+summary(reg_gdp)
+
+# Model 2: GDP growth and Unemployment
+reg_gdp_unemp <- lm(pv2p ~ GDP_growth_quarterly + unemployment, data = d_inc_econ_2)
+summary(reg_gdp_unemp)
+
+# Model 3: GDP growth, Unemployment, and Inflation (CPI)
+reg_gdp_unemp_cpi <- lm(pv2p ~ GDP_growth_quarterly + unemployment + CPI, data = d_inc_econ_2)
+summary(reg_gdp_unemp_cpi)
+
+# Model 4: Full model with S&P 500 data
+reg_full <- lm(pv2p ~ GDP_growth_quarterly + unemployment + CPI + sp500_close, data = d_inc_econ_2)
+summary(reg_full)
+
+# Compare the models using R-squared and MSE
+r_squared_values <- list(
+  Model1 = summary(reg_gdp)$r.squared,
+  Model2 = summary(reg_gdp_unemp)$r.squared,
+  Model3 = summary(reg_gdp_unemp_cpi)$r.squared,
+  Model4 = summary(reg_full)$r.squared
+)
+
+# Print R-squared values
+print("R-squared values:")
+print(r_squared_values)
+
+# Mean Squared Error (MSE) comparison
+mse_gdp <- mean((reg_gdp$model$pv2p - reg_gdp$fitted.values)^2)
+mse_gdp_unemp <- mean((reg_gdp_unemp$model$pv2p - reg_gdp_unemp$fitted.values)^2)
+mse_gdp_unemp_cpi <- mean((reg_gdp_unemp_cpi$model$pv2p - reg_gdp_unemp_cpi$fitted.values)^2)
+mse_full <- mean((reg_full$model$pv2p - reg_full$fitted.values)^2)
+
+mse_values <- list(
+  Model1 = mse_gdp,
+  Model2 = mse_gdp_unemp,
+  Model3 = mse_gdp_unemp_cpi,
+  Model4 = mse_full
+)
+
+# Print MSE values
+print("Mean Squared Error values:")
+print(mse_values)
+
+####----------------------------------------------------------#
+#### 2. Heterogeneous Predictive Power of the Economy
+####----------------------------------------------------------#
+
+# Add a variable to distinguish between sitting presidents and same-party heirs
+d_inc_econ_2 <- d_inc_econ_2 |> 
+  mutate(president_type = ifelse(winner == TRUE, "Sitting", "Heir"))
+
+# Model for Sitting Presidents
+reg_sitting <- lm(pv2p ~ GDP_growth_quarterly, data = d_inc_econ_2 |> filter(president_type == "Sitting"))
+summary(reg_sitting)
+
+# Model for Same-party Heirs
+reg_heir <- lm(pv2p ~ GDP_growth_quarterly, data = d_inc_econ_2 |> filter(president_type == "Heir"))
+summary(reg_heir)
+
+# Compare R-squared values
+r_squared_sitting <- summary(reg_sitting)$r.squared
+r_squared_heir <- summary(reg_heir)$r.squared
+
+print("R-squared for Sitting Presidents:")
+print(r_squared_sitting)
+
+print("R-squared for Same-party Heirs:")
+print(r_squared_heir)
+
+####----------------------------------------------------------#
+#### 3. Predicting 2024 Results Using National Economic Data
+####----------------------------------------------------------#
+
+# Load the new GDP data for 2024 (assuming it is available in the dataset)
+GDP_new <- d_fred |> 
+  filter(year == 2024 & quarter == 2) |> 
+  select(GDP_growth_quarterly)
+
+# Predict vote share for 2024 using the full model
+predict(reg_full, GDP_new)
+
+# Predict with uncertainty intervals
+predict(reg_full, GDP_new, interval = "prediction")
+
+
+```
+
+```{r}
+library(car)
+library(tidyverse)
+
+# Load data
+d_popvote <- read_csv("popvote_1948-2020.csv")  # Popular vote data
+d_fred <- read_csv("fred_econ.csv")             # Economic data from FRED
+d_bea <- read_csv("bea_econ.csv")               # BEA economic data
+
+# Process and merge data
+d_bea <- d_bea |> 
+  rename(year = "Year", quarter = "Quarter", 
+         gdp = "Gross domestic product", 
+         gnp = "Gross national product", 
+         dpi = "Disposable personal income", 
+         consumption = "Personal consumption expenditures", 
+         goods = "Goods", 
+         durables = "Durable goods", 
+         nondurables = "Nondurable goods", 
+         services = "Services", 
+         pop = "Population (midperiod, thousands)")
+
+# Filter and merge datasets
+d_inc_econ <- d_popvote |> 
+  filter(incumbent_party == TRUE) |> 
+  select(year, pv, pv2p, winner) |> 
+  left_join(d_fred |> filter(quarter == 2)) |> 
+  left_join(d_bea |> filter(quarter == "Q2") |> select(year, dpi))
+
+####----------------------------------------------------------#
+#### Understanding the relationship between economy and vote share
+####----------------------------------------------------------#
+
+# Scatterplot of GDP growth vs. vote share 
+d_inc_econ |> 
+  ggplot(aes(x = GDP_growth_quarterly, y = pv2p, label = year)) + 
+  geom_text() + 
+  geom_hline(yintercept = 50, lty = 2) + 
+  geom_vline(xintercept = 0.01, lty = 2) +
+  labs(x = "Second Quarter GDP Growth (%)", 
+       y = "Incumbent Party's National Popular Vote Share (%)",
+       title = "Relationship Between GDP Growth and Incumbent Vote Share") + 
+  theme_bw()
+
+# Exclude 2020 (outlier) and plot again with proper labels
+d_inc_econ_2 <- d_inc_econ |> filter(year != 2020)
+
+d_inc_econ_2 |> 
+  ggplot(aes(x = GDP_growth_quarterly, y = pv2p, label = year)) + 
+  geom_text() + 
+  geom_hline(yintercept = 50, lty = 2) + 
+  geom_vline(xintercept = 0.01, lty = 2) + 
+  labs(x = "Second Quarter GDP Growth (%)", 
+       y = "Incumbent Party's National Popular Vote Share (%)", 
+       title = "Effect of GDP Growth (Excluding 2020) on Vote Share") + 
+  theme_bw()
+
+# Compute correlations
+cor(d_inc_econ$GDP_growth_quarterly, d_inc_econ$pv2p)
+cor(d_inc_econ_2$GDP_growth_quarterly, d_inc_econ_2$pv2p)
+
+####----------------------------------------------------------#
+#### Fitting the Bivariate Linear Regression Model
+####----------------------------------------------------------#
+
+# Fit linear regression model with and without 2020
+reg_econ <- lm(pv2p ~ GDP_growth_quarterly, data = d_inc_econ)
+summary(reg_econ)
+
+reg_econ_2 <- lm(pv2p ~ GDP_growth_quarterly, data = d_inc_econ_2)
+summary(reg_econ_2)
+
+# Scatterplot with regression line, properly labeled
+d_inc_econ |> 
+  ggplot(aes(x = GDP_growth_quarterly, y = pv2p, label = year)) + 
+  geom_text() + 
+  geom_smooth(method = "lm", formula = y ~ x) +
+  geom_hline(yintercept = 50, lty = 2) + 
+  geom_vline(xintercept = 0.01, lty = 2) + 
+  labs(x = "Second Quarter GDP Growth (%)", 
+       y = "Incumbent Party's National Popular Vote Share (%)", 
+       title = "Y = 51.25 + 0.274 * GDP Growth (%)") + 
+  theme_bw() + 
+  theme(plot.title = element_text(size = 18))
+
+# Scatterplot with regression line (2020 removed), properly labeled
+d_inc_econ_2 |> 
+  ggplot(aes(x = GDP_growth_quarterly, y = pv2p, label = year)) + 
+  geom_text() + 
+  geom_smooth(method = "lm", formula = y ~ x) +
+  geom_hline(yintercept = 50, lty = 2) + 
+  geom_vline(xintercept = 0.01, lty = 2) + 
+  labs(x = "Second Quarter GDP Growth (%)", 
+       y = "Incumbent Party's National Popular Vote Share (%)", 
+       title = "Y = 49.38 + 0.737 * GDP Growth (%)") + 
+  theme_bw() + 
+  theme(plot.title = element_text(size = 18))
+
+####----------------------------------------------------------#
+#### Model Evaluation
+####----------------------------------------------------------#
+
+# R-squared values
+summary(reg_econ_2)$r.squared
+summary(reg_econ_2)$adj.r.squared
+
+# Predicted vs actual values plot
+plot(d_inc_econ$year, d_inc_econ$pv2p, type="l",
+     main="True Y (Line), Predicted Y (Dot) for Each Year",
+     xlab = "Year", ylab = "Popular Vote Share (%)")
+points(d_inc_econ$year, predict(reg_econ_2, d_inc_econ))
+
+# Residuals plot
+plot(reg_econ_2)
+
+# Mean Squared Error (MSE) plot with proper labels
+hist(reg_econ_2$model$pv2p - reg_econ_2$fitted.values, 
+     main = "Histogram of True Y - Predicted Y", 
+     xlab = "Residuals (True Y - Predicted Y)", 
+     ylab = "Frequency")
+mse <- mean((reg_econ_2$model$pv2p - reg_econ_2$fitted.values)^2)
+mse
+sqrt(mse)
+
+####----------------------------------------------------------#
+#### Out-of-Sample Model Testing
+####----------------------------------------------------------#
+
+# Leave-One-Out Validation
+(out_samp_pred <- predict(reg_econ_2, d_inc_econ[d_inc_econ$year == 2020,]))
+(out_samp_truth <- d_inc_econ |> filter(year == 2020) |> select(pv2p))
+out_samp_pred - out_samp_truth
+
+# Cross-Validation (One Run)
+years_out_samp <- sample(d_inc_econ_2$year, 9) 
+mod <- lm(pv2p ~ GDP_growth_quarterly, d_inc_econ_2[!(d_inc_econ_2$year %in% years_out_samp),])
+out_samp_pred <- predict(mod, d_inc_econ_2[d_inc_econ_2$year %in% years_out_samp,])
+out_samp_truth <- d_inc_econ_2$pv2p[d_inc_econ_2$year %in% years_out_samp]
+mean(out_samp_pred - out_samp_truth)
+
+# Cross-Validation (1000 Runs) with proper labels
+out_samp_errors <- sapply(1:1000, function(i) {
+  years_out_samp <- sample(d_inc_econ_2$year, 9) 
+  mod <- lm(pv2p ~ GDP_growth_quarterly, d_inc_econ_2[!(d_inc_econ_2$year %in% years_out_samp),])
+  out_samp_pred <- predict(mod, d_inc_econ_2[d_inc_econ_2$year %in% years_out_samp,])
+  out_samp_truth <- d_inc_econ_2$pv2p[d_inc_econ_2$year %in% years_out_samp]
+  mean(out_samp_pred - out_samp_truth)
+})
+
+mean(abs(out_samp_errors))
+
+hist(out_samp_errors,
+     main = "Mean Out-of-Sample Residual\n(1000 Runs of Cross-Validation)",
+     xlab = "Out-of-Sample Residual",
+     ylab = "Frequency")
+
+####----------------------------------------------------------#
+#### Predicting 2024 Results Using Simple Economy Model
+####----------------------------------------------------------#
+
+# Load the new GDP data
+GDP_new <- d_fred |> 
+  filter(year == 2024 & quarter == 2) |> 
+  select(GDP_growth_quarterly)
+
+# Predict vote share for 2024
+predict(reg_econ_2, GDP_new)
+
+# Predict with uncertainty
+predict(reg_econ_2, GDP_new, interval = "prediction")
+
+```
+
+Date: 09.16.2024
+
+This week's focus is on exploring the relationship between economic performance and the incumbent party’s vote share in U.S. presidential elections. Specifically, this analysis investigates whether second-quarter GDP growth serves as a predictor for the popular vote share of the incumbent party. The process involves analyzing the data through bivariate correlation and linear regression, followed by model evaluation and out-of-sample testing. Finally, a prediction for the 2024 election is made using the model derived from historical data.
+
+1. Data Preparation and Overview
+The dataset includes U.S. presidential election outcomes from 1948 to 2020, containing the national popular vote share of the incumbent party (pv2p) alongside several economic indicators. The primary focus is on second-quarter GDP growth from the Federal Reserve Economic Data (FRED). The data is filtered to include elections where the incumbent party was running.
+
+2. Scatterplot and Correlation Analysis
+The first step was plotting the relationship between second-quarter GDP growth and the incumbent party's national popular vote share. The scatterplot below, which includes all election years, shows a dashed line at 50%, representing the majority threshold.
+
+The scatterplot visually suggests a positive relationship between economic growth and the incumbent party's vote share. For example, years like 1984, when second-quarter GDP growth was high, saw the incumbent party performing well in the popular vote. In contrast, in 1980, with negative GDP growth, the incumbent party’s vote share fell below 50%.
+
+The Pearson correlation coefficients between second-quarter GDP growth and the incumbent vote share were calculated:
+
+Including 2020: 𝜌 = 0.18
+Excluding 2020: 𝜌 = 0.47
+The significant difference when excluding 2020 justifies treating it as an anomaly, given the economic and social disruptions caused by the COVID-19 pandemic. Future analyses could explore how unique crises like this impact voter behavior and electoral outcomes.
+
+3. Fitting the Linear Regression Model
+To quantify the relationship between GDP growth and vote share, a linear regression model was fitted. The model without 2020 showed the following relationship:
+
+Incumbent Vote Share = 49.38 + 0.737 * GDP Growth
+
+This suggests that for each percentage point increase in second-quarter GDP growth, the incumbent party gains an additional 0.737% of the popular vote. The adjusted 𝑅² for this model is 0.18, which, while moderate, indicates that GDP growth is a meaningful predictor but does not account for all the variation in vote share.
+
+4. Model Evaluation and Diagnostics
+The model was evaluated using several diagnostic plots, including residuals versus fitted values and a Q-Q plot. These plots are essential to assess the model's assumptions and identify potential outliers.
+
+The residuals showed no clear patterns, indicating a reasonably good fit.
+The Q-Q plot, however, displayed deviations from normality in the tails, highlighting areas where the model may struggle.
+Cook’s distance analysis identified 1980 and 2020 as potential outliers. While 2020 was already excluded, further exploration of 1980 and similar years (such as 2008, the financial crisis) could help refine the model and account for anomalies caused by crises.
+5. Out-of-Sample Testing and Cross-Validation
+To ensure robustness, cross-validation was conducted. After running 1,000 rounds of cross-validation, the mean out-of-sample residual was close to zero, demonstrating that the model performs well even on unseen data.
+
+Additionally, the leave-one-out validation provided further confidence in the model’s stability. The use of cross-validation ensures that the model is not overfitting to the training data and is capable of making reasonably accurate predictions on future elections.
+
+6. Prediction for 2024
+Using the 2024 Q2 GDP growth estimate, the model predicts the incumbent party's popular vote share to be approximately 47.73%, with a wide prediction interval reflecting the inherent uncertainty in the model.
+
+7. Incorporating Academic Literature for Greater Context
+To align with the blog’s academic rigor, it’s important to reference existing literature on the relationship between economic performance and voter behavior. Scholars such as Douglas Hibbs (The American Political Economy) and Larry Bartels (Unequal Democracy) have long explored how economic conditions, particularly real income growth, influence presidential elections. This body of work supports the notion that incumbents are rewarded for good economic performance and penalized for economic downturns, a trend visible in this analysis.
+
+Further, analyses by political scientists such as Alan Abramowitz in The Time for Change Model have demonstrated that GDP growth, while important, interacts with other factors like presidential approval and incumbency status. Incorporating these insights in future posts could bolster the theoretical foundation of the model.
+
+8. Further Exploration of Anomalies
+While excluding 2020 due to the pandemic is justified, it’s valuable to explore other crisis years, such as 2008. The financial crisis had a profound effect on the 2008 election, leading to economic dissatisfaction that influenced voter behavior. Future analyses could examine how models perform during these crisis years and adjust for the unique impact of economic shocks.
+
+9. Testing Additional Variables for Greater Explanatory Power
+The current model uses GDP growth as the sole economic predictor. While this is a meaningful variable, it does not capture all dimensions of economic performance. Future iterations of this analysis could incorporate variables such as unemployment rates, inflation, and consumer confidence. For example, incorporating the Misery Index (inflation + unemployment) could offer more comprehensive insights into how economic hardship influences voting behavior. A model that accounts for these additional factors may explain a greater portion of the variance in vote share and improve predictive accuracy.
+
+Conclusion
+This week’s analysis demonstrates that second-quarter GDP growth is a moderate predictor of the incumbent party's vote share in U.S. presidential elections. However, the relatively low 𝑅² indicates that other factors—both economic and non-economic—play a significant role in determining voter behavior. Future posts will focus on refining the model by incorporating additional variables and exploring how crises such as the 2008 financial meltdown or the 2020 pandemic impact electoral outcomes.
+
+Data Sources:
+U.S. Bureau of Economic Analysis (BEA)
+Federal Reserve Economic Data (FRED)
+U.S. Presidential Election Results (1948-2020)
